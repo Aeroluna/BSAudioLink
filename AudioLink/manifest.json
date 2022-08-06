@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "author": "Aeroluna",
+  "description": "VRC Audio Link ported to Beat Saber. Original: https://github.com/llealloo/vrc-udon-audio-link",
+  "gameVersion": "1.24.0",
+  "id": "AudioLink",
+  "name": "AudioLink",
+  "version": "0.0.1",
+  "dependsOn": {
+    "BSIPA": "^4.2.2"
+  }
+}
