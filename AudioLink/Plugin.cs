@@ -1,30 +1,32 @@
-﻿using System.Linq;
-using AudioLink.Assets;
-using AudioLink.Installers;
+﻿using AudioLink.Assets;
 using IPA;
-using IPA.Config;
-using JetBrains.Annotations;
-using SiraUtil.Zenject;
+using System.Linq;
+using UnityEngine;
+using HarmonyLib;
+using System.Reflection;
 
 namespace AudioLink
 {
     [Plugin(RuntimeOptions.DynamicInit)]
     internal class Plugin
     {
+        internal const string HARMONY_ID = "com.github.aeroluna.audiolink";
         internal const string CAPABILITY = "AudioLink";
+        internal static IPA.Logging.Logger Logger;
+        internal static Harmony m_Harmony;
 
-        [UsedImplicitly]
-        [Init]
-        public Plugin(Config config, Zenjector zenjector)
-        {
-            AssetBundleManager.LoadFromMemoryAsync();
-            zenjector.Install<AudioLinkPlayerInstaller>(Location.Player);
-        }
-
+        public static Components.AudioLink AudioLink { get; private set; }
         public static bool Enabled { get; private set; }
 
+        [Init]
+        public Plugin(IPA.Logging.Logger logger)
+        {
+            Logger = logger;
+            AssetBundleManager.LoadFromMemoryAsync();
+
+        }
+
 #pragma warning disable CA1822
-        [UsedImplicitly]
         [OnEnable]
         public void OnEnable()
         {
@@ -34,9 +36,21 @@ namespace AudioLink
             }
 
             Enabled = true;
-        }
 
-        [UsedImplicitly]
+            try
+            {
+                m_Harmony = new Harmony(HARMONY_ID);
+                m_Harmony.PatchAll(Assembly.GetExecutingAssembly());
+            }
+            catch (System.Exception p_Exception)
+            {
+                Logger.Error("[OnEnable] Error:");
+                Logger.Error(p_Exception);
+            }
+
+            AudioLink = new GameObject("AudioLink").AddComponent<Components.AudioLink>();
+            GameObject.DontDestroyOnLoad(AudioLink.gameObject);
+        }
         [OnDisable]
         public void OnDisable()
         {
@@ -48,6 +62,7 @@ namespace AudioLink
             Enabled = false;
         }
 #pragma warning restore CA1822
+
 
         private static void ToggleCapability(bool value)
         {

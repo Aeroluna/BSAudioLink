@@ -6,13 +6,12 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Zenject;
 
-namespace AudioLink.Scripts
+namespace AudioLink.Components
 {
     // from https://github.com/llealloo/vrc-udon-audio-link/blob/master/AudioLink/Scripts/AudioLink.cs
-    internal class AudioLink : ITickable
+    internal class AudioLink : MonoBehaviour
     {
         private const float AUDIOLINK_VERSION_NUMBER = 2.08f;
-
         private const float READBACK_TIME = 0;
         private const int RIGHT_CHANNEL_TEST_DELAY = 300;
 
@@ -68,14 +67,15 @@ namespace AudioLink.Scripts
         private static readonly FieldAccessor<AudioTimeSyncController, AudioSource>.Accessor _audioSourceAccessor =
             FieldAccessor<AudioTimeSyncController, AudioSource>.GetAccessor("_audioSource");
 
-        private readonly Color _customThemeColor0;
-        private readonly Color _customThemeColor1;
-        private readonly Color _customThemeColor2;
-        private readonly Color _customThemeColor3;
+        private ColorScheme defaultColorScheme = null;
+        private Color _customThemeColor0;
+        private Color _customThemeColor1;
+        private Color _customThemeColor2;
+        private Color _customThemeColor3;
 
-        private readonly AudioSource _audioSource;
+        private AudioSource _audioSource;
 
-        private readonly Material _audioMaterial;
+        private Material _audioMaterial;
 
         private readonly float[] _audioFramesL = new float[1023 * 4];
         private readonly float[] _audioFramesR = new float[1023 * 4];
@@ -93,15 +93,8 @@ namespace AudioLink.Scripts
         private int _rightChannelTestCounter;
         private bool _ignoreRightChannel;
 
-        [UsedImplicitly]
-        private AudioLink(AudioTimeSyncController audioTimeSyncController, ColorScheme colorScheme)
+        private void Awake()
         {
-            _audioSource = _audioSourceAccessor(ref audioTimeSyncController);
-            _customThemeColor0 = colorScheme.environmentColor0;
-            _customThemeColor1 = colorScheme.environmentColor1;
-            _customThemeColor2 = colorScheme.environmentColor0Boost;
-            _customThemeColor3 = colorScheme.environmentColor1Boost;
-
             _audioMaterial = AssetBundleManager.Material;
             RenderTexture audioRenderTexture = AssetBundleManager.RenderTexture;
 
@@ -111,7 +104,40 @@ namespace AudioLink.Scripts
             Shader.SetGlobalTexture(_audioTexture, audioRenderTexture, RenderTextureSubElement.Default);
         }
 
-        public void Tick()
+        internal void Configure(AudioSource audioSource)
+        {
+            _audioSource = audioSource;
+
+            // clear previous data if no audio source
+            if (!audioSource)
+                SendAudioOutputData();
+        }
+        internal void Configure(ColorScheme colorScheme)
+        {
+            var targetColorScheme = colorScheme ?? defaultColorScheme;
+            if (targetColorScheme != null)
+            {
+                _customThemeColor0 = targetColorScheme.environmentColor0;
+                _customThemeColor1 = targetColorScheme.environmentColor1;
+                _customThemeColor2 = targetColorScheme.environmentColor0Boost;
+                _customThemeColor3 = targetColorScheme.environmentColor1Boost;
+                UpdateThemeColors();
+            }
+        }
+        internal void ConfigureDefault(ColorScheme colorScheme)
+        {
+            defaultColorScheme = colorScheme;
+            if (defaultColorScheme != null)
+            {
+                _customThemeColor0 = defaultColorScheme.environmentColor0;
+                _customThemeColor1 = defaultColorScheme.environmentColor1;
+                _customThemeColor2 = defaultColorScheme.environmentColor0Boost;
+                _customThemeColor3 = defaultColorScheme.environmentColor1Boost;
+                UpdateThemeColors();
+            }
+        }
+
+        private void Update()
         {
             // Tested: There does not appear to be any drift updating it this way.
             _elapsedTime += Time.deltaTime;
@@ -166,7 +192,7 @@ namespace AudioLink.Scripts
             //    Casting and encoding as UInt32 as 2 floats, to prevent aliasing, twice: 5.1ms / 255
             //    Casting and encoding as UInt32 as 2 floats, to prevent aliasing, once: 3.2ms / 255
             // ReSharper disable once InvertIf
-            if (_audioSource != null)
+            if (_audioSource)
             {
                 SendAudioOutputData();
 
@@ -174,6 +200,8 @@ namespace AudioLink.Scripts
                 _audioMaterial.SetFloat(_sourceVolume, _audioSource.volume);
                 _audioMaterial.SetFloat(_sourceSpatialBlend, _audioSource.spatialBlend);
             }
+            else
+                _audioMaterial.SetFloat(_sourceVolume, 0);
         }
 
         public void UpdateSettings()
@@ -246,27 +274,31 @@ namespace AudioLink.Scripts
 
         private void SendAudioOutputData()
         {
-            _audioSource.GetOutputData(_audioFramesL, 0);                // left channel
-
-            if (_rightChannelTestCounter > 0)
+            if (_audioSource)
             {
-                if (_ignoreRightChannel)
+                _audioSource.GetOutputData(_audioFramesL, 0);                // left channel
+
+                if (_rightChannelTestCounter > 0)
                 {
-                    Array.Copy(_audioFramesL, 0, _audioFramesR, 0, 4092);
+                    if (_ignoreRightChannel)
+                        Array.Copy(_audioFramesL, 0, _audioFramesR, 0, 4092);
+                    else
+                        _audioSource.GetOutputData(_audioFramesR, 1);
+
+                    _rightChannelTestCounter--;
                 }
                 else
                 {
-                    _audioSource.GetOutputData(_audioFramesR, 1);
+                    _rightChannelTestCounter = RIGHT_CHANNEL_TEST_DELAY;      // reset test countdown
+                    _audioFramesR[0] = 0f;                                  // reset tested array element to zero just in case
+                    _audioSource.GetOutputData(_audioFramesR, 1);            // right channel test
+                    _ignoreRightChannel = _audioFramesR[0] == 0f;
                 }
-
-                _rightChannelTestCounter--;
             }
             else
             {
-                _rightChannelTestCounter = RIGHT_CHANNEL_TEST_DELAY;      // reset test countdown
-                _audioFramesR[0] = 0f;                                  // reset tested array element to zero just in case
-                _audioSource.GetOutputData(_audioFramesR, 1);            // right channel test
-                _ignoreRightChannel = _audioFramesR[0] == 0f;
+                Array.Clear(_audioFramesL, 0, _audioFramesL.Length);
+                Array.Clear(_audioFramesR, 0, _audioFramesL.Length);
             }
 
             Array.Copy(_audioFramesL, 0, _samples, 0, 1023); // 4092 - 1023 * 4
