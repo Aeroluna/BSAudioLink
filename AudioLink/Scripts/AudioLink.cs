@@ -1,6 +1,5 @@
 ﻿using System;
 using AudioLink.Assets;
-using IPA.Utilities;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -65,50 +64,39 @@ namespace AudioLink.Scripts
         private static readonly int _samples2R = Shader.PropertyToID("_Samples2R");
         private static readonly int _samples3R = Shader.PropertyToID("_Samples3R");
 
-        private static readonly FieldAccessor<AudioTimeSyncController, AudioSource>.Accessor _audioSourceAccessor =
-            FieldAccessor<AudioTimeSyncController, AudioSource>.GetAccessor("_audioSource");
-
-        private readonly Color _customThemeColor0;
-        private readonly Color _customThemeColor1;
-        private readonly Color _customThemeColor2;
-        private readonly Color _customThemeColor3;
-
-        private readonly AudioSource _audioSource;
-
         private readonly Material _audioMaterial;
 
         private readonly float[] _audioFramesL = new float[1023 * 4];
         private readonly float[] _audioFramesR = new float[1023 * 4];
         private readonly float[] _samples = new float[1023];
 
+        private Color _customThemeColor0;
+        private Color _customThemeColor1;
+        private Color _customThemeColor2;
+        private Color _customThemeColor3;
+
+        private AudioSource? _audioSource;
+
         // Mechanism to provide sync'd instance time to all avatars.
         private double _elapsedTime;
         private double _elapsedTimeMSW;
         private int _networkTimeMS;
         private double _networkTimeMSAccumulatedError;
-        private double _fPSTime;
-        private int _fPSCount;
+        private double _fpsTime;
+        private int _fpsCount;
 
         // Fix for AVPro mono game output bug (if running the game with a mono output source like a headset)
         private int _rightChannelTestCounter;
         private bool _ignoreRightChannel;
 
         [UsedImplicitly]
-        private AudioLink(AudioTimeSyncController audioTimeSyncController, ColorScheme colorScheme)
+        private AudioLink()
         {
-            _audioSource = _audioSourceAccessor(ref audioTimeSyncController);
-            _customThemeColor0 = colorScheme.environmentColor0;
-            _customThemeColor1 = colorScheme.environmentColor1;
-            _customThemeColor2 = colorScheme.environmentColor0Boost;
-            _customThemeColor3 = colorScheme.environmentColor1Boost;
-
             _audioMaterial = AssetBundleManager.Material;
-            RenderTexture audioRenderTexture = AssetBundleManager.RenderTexture;
 
             UpdateSettings();
-            UpdateThemeColors();
 
-            Shader.SetGlobalTexture(_audioTexture, audioRenderTexture, RenderTextureSubElement.Default);
+            Shader.SetGlobalTexture(_audioTexture, AssetBundleManager.RenderTexture, RenderTextureSubElement.Default);
         }
 
         public void Tick()
@@ -131,9 +119,9 @@ namespace AudioLink.Scripts
                 _networkTimeMS += advanceTimeMS;
             }
 
-            _fPSCount++;
+            _fpsCount++;
 
-            if (_elapsedTime >= _fPSTime)
+            if (_elapsedTime >= _fpsTime)
             {
                 FPSUpdate();
             }
@@ -176,7 +164,21 @@ namespace AudioLink.Scripts
             }
         }
 
-        public void UpdateSettings()
+        internal void SetAudioSource(AudioSource audioSource)
+        {
+            _audioSource = audioSource;
+        }
+
+        internal void SetColorScheme(ColorScheme colorScheme)
+        {
+            _customThemeColor0 = colorScheme.environmentColor0;
+            _customThemeColor1 = colorScheme.environmentColor1;
+            _customThemeColor2 = colorScheme.environmentColor0Boost;
+            _customThemeColor3 = colorScheme.environmentColor1Boost;
+            UpdateThemeColors();
+        }
+
+        internal void UpdateSettings()
         {
             _audioMaterial.SetFloat(_x0, X0);
             _audioMaterial.SetFloat(_x1, X1);
@@ -195,7 +197,7 @@ namespace AudioLink.Scripts
 
         // Note: These might be changed frequently so as an optimization, they're in a different function
         // rather than bundled in with the other things in UpdateSettings().
-        public void UpdateThemeColors()
+        internal void UpdateThemeColors()
         {
             _audioMaterial.SetInt(_themeColorMode, THEME_COLOR_MODE);
             _audioMaterial.SetColor(_customThemeColor0ID, _customThemeColor0);
@@ -207,10 +209,10 @@ namespace AudioLink.Scripts
         // Only happens once per second.
         private void FPSUpdate()
         {
-            _audioMaterial.SetVector(_versionNumberAndFPSProperty, new Vector4(AUDIOLINK_VERSION_NUMBER, 0, _fPSCount, 1));
+            _audioMaterial.SetVector(_versionNumberAndFPSProperty, new Vector4(AUDIOLINK_VERSION_NUMBER, 0, _fpsCount, 1));
             _audioMaterial.SetVector(_playerCountAndData, new Vector4(0, 0, 0, 0));
-            _fPSCount = 0;
-            _fPSTime++;
+            _fpsCount = 0;
+            _fpsTime++;
 
             // Other things to handle every second.
 
@@ -222,7 +224,7 @@ namespace AudioLink.Scripts
                 // For particularly long running instances, i.e. several days, the first
                 // few frames will be spent federating _elapsedTime into _elapsedTimeMSW.
                 // This is fine.  It just means over time, the
-                _fPSTime = 0;
+                _fpsTime = 0;
                 _elapsedTime -= ElapsedTimeMSWBoundary;
                 _elapsedTimeMSW++;
             }
@@ -246,6 +248,11 @@ namespace AudioLink.Scripts
 
         private void SendAudioOutputData()
         {
+            if (_audioSource == null)
+            {
+                return;
+            }
+
             _audioSource.GetOutputData(_audioFramesL, 0);                // left channel
 
             if (_rightChannelTestCounter > 0)

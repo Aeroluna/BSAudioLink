@@ -2,52 +2,33 @@
 using AudioLink.Assets;
 using AudioLink.Installers;
 using IPA;
-using IPA.Config;
 using JetBrains.Annotations;
 using SiraUtil.Zenject;
 
 namespace AudioLink
 {
-    [Plugin(RuntimeOptions.DynamicInit)]
+    [Plugin(RuntimeOptions.SingleStartInit)]
     internal class Plugin
     {
         internal const string CAPABILITY = "AudioLink";
 
         [UsedImplicitly]
         [Init]
-        public Plugin(Config config, Zenjector zenjector)
+        public Plugin(IPA.Logging.Logger logger, Zenjector zenjector)
         {
+            Logger = logger;
             AssetBundleManager.LoadFromMemoryAsync();
+            zenjector.Install<AudioLinkMenuInstaller>(Location.Menu);
             zenjector.Install<AudioLinkPlayerInstaller>(Location.Player);
-        }
+            zenjector.Install<AudioLinkAppInstaller>(Location.App);
 
-        public static bool Enabled { get; private set; }
-
-#pragma warning disable CA1822
-        [UsedImplicitly]
-        [OnEnable]
-        public void OnEnable()
-        {
             if (IPA.Loader.PluginManager.EnabledPlugins.Any(x => x.Id == "SongCore"))
             {
                 ToggleCapability(true);
             }
-
-            Enabled = true;
         }
 
-        [UsedImplicitly]
-        [OnDisable]
-        public void OnDisable()
-        {
-            if (IPA.Loader.PluginManager.EnabledPlugins.Any(x => x.Id == "SongCore"))
-            {
-                ToggleCapability(false);
-            }
-
-            Enabled = false;
-        }
-#pragma warning restore CA1822
+        public static IPA.Logging.Logger Logger { get; set; } = null!;
 
         private static void ToggleCapability(bool value)
         {

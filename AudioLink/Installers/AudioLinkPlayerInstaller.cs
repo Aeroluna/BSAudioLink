@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using AudioLink.Providers;
+using JetBrains.Annotations;
 using Zenject;
 
 namespace AudioLink.Installers
@@ -8,12 +9,7 @@ namespace AudioLink.Installers
     {
         public override void InstallBindings()
         {
-            if (!Plugin.Enabled)
-            {
-                return;
-            }
-
-            Container.BindInterfacesTo<Scripts.AudioLink>().AsSingle().NonLazy();
+            Container.BindInterfacesTo<GameProvider>().AsSingle().NonLazy();
         }
     }
 }
