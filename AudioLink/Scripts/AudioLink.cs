@@ -173,8 +173,17 @@ namespace AudioLink.Scripts
         {
             _customThemeColor0 = colorScheme.environmentColor0;
             _customThemeColor1 = colorScheme.environmentColor1;
-            _customThemeColor2 = colorScheme.environmentColor0Boost;
-            _customThemeColor3 = colorScheme.environmentColor1Boost;
+            if (colorScheme.supportsEnvironmentColorBoost)
+            {
+                _customThemeColor2 = colorScheme.environmentColor0Boost;
+                _customThemeColor3 = colorScheme.environmentColor1Boost;
+            }
+            else
+            {
+                _customThemeColor2 = colorScheme.environmentColor0;
+                _customThemeColor3 = colorScheme.environmentColor1;
+            }
+
             UpdateThemeColors();
         }
 

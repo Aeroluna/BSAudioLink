@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using IPA.Utilities;
 using JetBrains.Annotations;
 using SiraUtil.Affinity;
@@ -11,14 +12,33 @@ namespace AudioLink.Providers
         private static readonly FieldAccessor<SongPreviewPlayer.AudioSourceVolumeController, AudioSource>.Accessor _audioSourceAccessor =
             FieldAccessor<SongPreviewPlayer.AudioSourceVolumeController, AudioSource>.GetAccessor("audioSource");
 
+        private static readonly FieldAccessor<ColorManagerInstaller, ColorSchemeSO>.Accessor _colorSchemeAccessor =
+            FieldAccessor<ColorManagerInstaller, ColorSchemeSO>.GetAccessor("_menuColorScheme");
+
+        private static ColorScheme? _menuColorScheme;
+
         private readonly Scripts.AudioLink _audioLink;
-        private readonly PlayerDataModel _playerDataModel;
 
         [UsedImplicitly]
         private MenuProvider(Scripts.AudioLink audioLink, PlayerDataModel playerDataModel)
         {
             _audioLink = audioLink;
-            _playerDataModel = playerDataModel;
+            _audioLink.SetColorScheme(playerDataModel.playerData.colorSchemesSettings.GetOverrideColorScheme() ?? MenuColorScheme);
+        }
+
+        private static ColorScheme MenuColorScheme
+        {
+            get
+            {
+                // ReSharper disable once InvertIf
+                if (_menuColorScheme == null)
+                {
+                    ColorManagerInstaller? colorManagerInstaller = Resources.FindObjectsOfTypeAll<ColorManagerInstaller>().First();
+                    _menuColorScheme = _colorSchemeAccessor(ref colorManagerInstaller).colorScheme;
+                }
+
+                return _menuColorScheme;
+            }
         }
 
         [AffinityPostfix]
@@ -37,13 +57,6 @@ namespace AudioLink.Providers
         {
             SongPreviewPlayer.AudioSourceVolumeController audioSourceController = ____audioSourceControllers[____activeChannel];
             _audioLink.SetAudioSource(_audioSourceAccessor(ref audioSourceController));
-        }
-
-        [AffinityPostfix]
-        [AffinityPatch(typeof(ColorManagerInstaller), nameof(ColorManagerInstaller.InstallBindings))]
-        private void ColorManagerInstallerProvide(ColorSchemeSO ____menuColorScheme)
-        {
-            _audioLink.SetColorScheme(_playerDataModel.playerData.colorSchemesSettings.GetOverrideColorScheme() ?? ____menuColorScheme.colorScheme);
         }
     }
 }
