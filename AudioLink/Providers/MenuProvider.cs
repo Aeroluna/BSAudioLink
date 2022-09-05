@@ -18,12 +18,14 @@ namespace AudioLink.Providers
         private static ColorScheme? _menuColorScheme;
 
         private readonly Scripts.AudioLink _audioLink;
+        private readonly PlayerDataModel _playerDataModel;
 
         [UsedImplicitly]
         private MenuProvider(Scripts.AudioLink audioLink, PlayerDataModel playerDataModel)
         {
             _audioLink = audioLink;
-            _audioLink.SetColorScheme(playerDataModel.playerData.colorSchemesSettings.GetOverrideColorScheme() ?? MenuColorScheme);
+            _playerDataModel = playerDataModel;
+            RefreshColorScheme();
         }
 
         private static ColorScheme MenuColorScheme
@@ -39,6 +41,15 @@ namespace AudioLink.Providers
 
                 return _menuColorScheme;
             }
+        }
+
+        [AffinityPostfix]
+        [AffinityPatch(typeof(ColorsOverrideSettingsPanelController), nameof(ColorsOverrideSettingsPanelController.HandleOverrideColorsToggleValueChanged))]
+        [AffinityPatch(typeof(ColorsOverrideSettingsPanelController), nameof(ColorsOverrideSettingsPanelController.HandleEditColorSchemeControllerDidChangeColorScheme))]
+        [AffinityPatch(typeof(ColorsOverrideSettingsPanelController), "HandleDropDownDidSelectCellWithIdx")]
+        private void RefreshColorScheme()
+        {
+            _audioLink.SetColorScheme(_playerDataModel.playerData.colorSchemesSettings.GetOverrideColorScheme() ?? MenuColorScheme);
         }
 
         [AffinityPostfix]

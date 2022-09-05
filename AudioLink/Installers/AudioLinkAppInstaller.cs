@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using AudioLink.Providers;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using Zenject;
 
 namespace AudioLink.Installers
