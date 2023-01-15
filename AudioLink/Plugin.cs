@@ -1,7 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using AudioLink.Assets;
 using AudioLink.Installers;
 using IPA;
+using IPA.Loader;
 using JetBrains.Annotations;
 using SiraUtil.Zenject;
 
@@ -21,14 +23,22 @@ namespace AudioLink
             zenjector.Install<AudioLinkMenuInstaller>(Location.Menu);
             zenjector.Install<AudioLinkPlayerInstaller>(Location.Player);
             zenjector.Install<AudioLinkAppInstaller>(Location.App);
+        }
 
-            if (IPA.Loader.PluginManager.EnabledPlugins.Any(x => x.Id == "SongCore"))
+        public static IPA.Logging.Logger Logger { get; set; } = null!;
+
+#pragma warning disable CA1822
+        [UsedImplicitly]
+        [OnEnable]
+        public void OnEnable()
+        {
+            IEnumerable<PluginMetadata> allPlugins = PluginManager.EnabledPlugins.Concat(PluginManager.DisabledPlugins);
+            if (allPlugins.Any(x => x.Id == "SongCore"))
             {
                 ToggleCapability(true);
             }
         }
-
-        public static IPA.Logging.Logger Logger { get; set; } = null!;
+#pragma warning restore CA1822
 
         private static void ToggleCapability(bool value)
         {
