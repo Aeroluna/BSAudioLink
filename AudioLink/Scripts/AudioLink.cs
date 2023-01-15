@@ -10,9 +10,8 @@ namespace AudioLink.Scripts
     // from https://github.com/llealloo/vrc-udon-audio-link/blob/master/AudioLink/Scripts/AudioLink.cs
     internal class AudioLink : ITickable
     {
-        private const float AUDIOLINK_VERSION_NUMBER = 2.08f;
+        private const float AUDIOLINK_VERSION_NUMBER = 3.01f;
 
-        private const float READBACK_TIME = 0;
         private const int RIGHT_CHANNEL_TEST_DELAY = 300;
 
         private const float GAIN = 1f;
@@ -30,13 +29,17 @@ namespace AudioLink.Scripts
         private const float FADE_EXP_FALLOFF = 0.75f;
         private const int THEME_COLOR_MODE = 1;
 
+        // i'm sure mawntee will bother me to implement this at some point
+        private const string CUSTOM_STRING1 = "";
+        private const string CUSTOM_STRING2 = "";
+
         private static readonly int _audioTexture = Shader.PropertyToID("_AudioTexture");
-        private static readonly int _versionNumberAndFPSProperty = Shader.PropertyToID("_VersionNumberAndFPSProperty");
-        private static readonly int _playerCountAndData = Shader.PropertyToID("_PlayerCountAndData");
-        private static readonly int _advancedTimeProps = Shader.PropertyToID("_AdvancedTimeProps");
-        private static readonly int _advancedTimeProps2 = Shader.PropertyToID("_AdvancedTimeProps2");
-        private static readonly int _sourceVolume = Shader.PropertyToID("_SourceVolume");
-        private static readonly int _sourceSpatialBlend = Shader.PropertyToID("_SourceSpatialBlend");
+
+        private static readonly int _fadeLength = Shader.PropertyToID("_FadeLength");
+        private static readonly int _fadeExpFalloff = Shader.PropertyToID("_FadeExpFalloff");
+        private static readonly int _gain = Shader.PropertyToID("_Gain");
+        private static readonly int _bass = Shader.PropertyToID("_Bass");
+        private static readonly int _treble = Shader.PropertyToID("_Treble");
         private static readonly int _x0 = Shader.PropertyToID("_X0");
         private static readonly int _x1 = Shader.PropertyToID("_X1");
         private static readonly int _x2 = Shader.PropertyToID("_X2");
@@ -45,20 +48,28 @@ namespace AudioLink.Scripts
         private static readonly int _threshold1 = Shader.PropertyToID("_Threshold1");
         private static readonly int _threshold2 = Shader.PropertyToID("_Threshold2");
         private static readonly int _threshold3 = Shader.PropertyToID("_Threshold3");
-        private static readonly int _gain = Shader.PropertyToID("_Gain");
-        private static readonly int _fadeLength = Shader.PropertyToID("_FadeLength");
-        private static readonly int _fadeExpFalloff = Shader.PropertyToID("_FadeExpFalloff");
-        private static readonly int _bass = Shader.PropertyToID("_Bass");
-        private static readonly int _treble = Shader.PropertyToID("_Treble");
+        private static readonly int _sourceVolume = Shader.PropertyToID("_SourceVolume");
+        private static readonly int _sourceSpatialBlend = Shader.PropertyToID("_SourceSpatialBlend");
+        private static readonly int _sourcePosition = Shader.PropertyToID("_SourcePosition");
         private static readonly int _themeColorMode = Shader.PropertyToID("_ThemeColorMode");
         private static readonly int _customThemeColor0ID = Shader.PropertyToID("_CustomThemeColor0");
         private static readonly int _customThemeColor1ID = Shader.PropertyToID("_CustomThemeColor1");
         private static readonly int _customThemeColor2ID = Shader.PropertyToID("_CustomThemeColor2");
         private static readonly int _customThemeColor3ID = Shader.PropertyToID("_CustomThemeColor3");
+
+        private static readonly int _stringCustom1 = Shader.PropertyToID("_StringCustom1");
+        private static readonly int _stringCustom2 = Shader.PropertyToID("_StringCustom2");
+
+        private static readonly int _advancedTimeProps0 = Shader.PropertyToID("_AdvancedTimeProps0");
+        private static readonly int _advancedTimeProps1 = Shader.PropertyToID("_AdvancedTimeProps1");
+        private static readonly int _playerCountAndData = Shader.PropertyToID("_PlayerCountAndData");
+        private static readonly int _versionNumberAndFPSProperty = Shader.PropertyToID("_VersionNumberAndFPSProperty");
+
         private static readonly int _samples0L = Shader.PropertyToID("_Samples0L");
         private static readonly int _samples1L = Shader.PropertyToID("_Samples1L");
         private static readonly int _samples2L = Shader.PropertyToID("_Samples2L");
         private static readonly int _samples3L = Shader.PropertyToID("_Samples3L");
+
         private static readonly int _samples0R = Shader.PropertyToID("_Samples0R");
         private static readonly int _samples1R = Shader.PropertyToID("_Samples1R");
         private static readonly int _samples2R = Shader.PropertyToID("_Samples2R");
@@ -66,6 +77,8 @@ namespace AudioLink.Scripts
 
         private readonly Material _audioMaterial;
 
+        ////private float[] _spectrumValues = new float[1024]; // unused in original script
+        ////private float[] _spectrumValuesTrim = new float[1023];
         private readonly float[] _audioFramesL = new float[1023 * 4];
         private readonly float[] _audioFramesR = new float[1023 * 4];
         private readonly float[] _samples = new float[1023];
@@ -95,6 +108,7 @@ namespace AudioLink.Scripts
             _audioMaterial = AssetBundleManager.Material;
 
             UpdateSettings();
+            UpdateCustomStrings();
 
             Shader.SetGlobalTexture(_audioTexture, AssetBundleManager.RenderTexture, RenderTextureSubElement.Default);
         }
@@ -126,15 +140,15 @@ namespace AudioLink.Scripts
                 FPSUpdate();
             }
 
-            _audioMaterial.SetVector(_advancedTimeProps, new Vector4(
+            // use _AdvancedTimeProps0.w for Debugging
+            _audioMaterial.SetVector(_advancedTimeProps0, new Vector4(
                 (float)_elapsedTime,
                 (float)_elapsedTimeMSW,
-                (float)DateTime.Now.TimeOfDay.TotalSeconds,
-                READBACK_TIME));
+                (float)DateTime.Now.TimeOfDay.TotalSeconds));
 
             // Jan 1, 1970 = 621355968000000000.0 ticks.
             double utcSecondsUnix = (DateTime.UtcNow.Ticks / 10000000.0) - 62135596800.0;
-            _audioMaterial.SetVector(_advancedTimeProps2, new Vector4(
+            _audioMaterial.SetVector(_advancedTimeProps1, new Vector4(
                 _networkTimeMS & 65535,
                 _networkTimeMS >> 16,
                 (float)Math.Floor(utcSecondsUnix / 86400),
@@ -161,6 +175,7 @@ namespace AudioLink.Scripts
                 // Used to correct for the volume of the audio source component
                 _audioMaterial.SetFloat(_sourceVolume, _audioSource.volume);
                 _audioMaterial.SetFloat(_sourceSpatialBlend, _audioSource.spatialBlend);
+                _audioMaterial.SetVector(_sourcePosition, _audioSource.transform.position);
             }
         }
 
@@ -215,6 +230,18 @@ namespace AudioLink.Scripts
             _audioMaterial.SetColor(_customThemeColor3ID, _customThemeColor3);
         }
 
+        internal void UpdateCustomStrings()
+        {
+            UpdateGlobalString(_stringCustom1, CUSTOM_STRING1);
+            UpdateGlobalString(_stringCustom2, CUSTOM_STRING2);
+        }
+
+        private static float IntToFloatBits24Bit(uint value)
+        {
+            uint frac = value & 0x007FFFFF;
+            return (frac / 8388608F) * 1.1754944e-38F;
+        }
+
         // Only happens once per second.
         private void FPSUpdate()
         {
@@ -253,6 +280,72 @@ namespace AudioLink.Scripts
                     _networkTimeMS += networkTimeDelta / 20;
                     break;
             }
+        }
+
+        private void UpdateGlobalString(int nameID, string input)
+        {
+            const int maxLength = 32;
+            if (input.Length > maxLength)
+            {
+                input = input.Substring(0, maxLength);
+            }
+
+            // Get unicode codepoints
+            int[] codePoints = new int[input.Length];
+            int codePointsLength = 0;
+            for (int i = 0; i < input.Length; i++)
+            {
+                codePoints[codePointsLength++] = char.ConvertToUtf32(input, i);
+                if (char.IsHighSurrogate(input[i]))
+                {
+                    i += 1;
+                }
+            }
+
+            // Pack them into vectors
+            Vector4[] vecs = new Vector4[maxLength / 4]; // 4 chars per vector
+            int j = 0;
+            for (int i = 0; i < vecs.Length; i++)
+            {
+                if (j < codePoints.Length)
+                {
+                    vecs[i].x = IntToFloatBits24Bit((uint)codePoints[j++]);
+                }
+                else
+                {
+                    break;
+                }
+
+                if (j < codePoints.Length)
+                {
+                    vecs[i].y = IntToFloatBits24Bit((uint)codePoints[j++]);
+                }
+                else
+                {
+                    break;
+                }
+
+                if (j < codePoints.Length)
+                {
+                    vecs[i].z = IntToFloatBits24Bit((uint)codePoints[j++]);
+                }
+                else
+                {
+                    break;
+                }
+
+                if (j < codePoints.Length)
+                {
+                    vecs[i].w = IntToFloatBits24Bit((uint)codePoints[j++]);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            // Expose the vectors to shader
+            _audioMaterial.SetVectorArray(nameID, vecs);
         }
 
         private void SendAudioOutputData()

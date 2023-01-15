@@ -22,9 +22,9 @@ namespace AudioLink.Assets
                 bytes = memoryStream.ToArray();
             }
 
-            AssetBundle bundle = AssetBundle.LoadFromMemory(bytes, 83812045);
-            Material = bundle.LoadAsset<Material>("assets/audioLink/materials/mat_audiolink.mat");
-            RenderTexture = bundle.LoadAsset<RenderTexture>("assets/audiolink/rendertextures/rt_audiolink.asset");
+            AssetBundle bundle = AssetBundle.LoadFromMemory(bytes, 3767804515);
+            Material = bundle.LoadAsset<Material>("assets/com.llealloo.audiolink/runtime/materials/mat_audiolink.mat");
+            RenderTexture = bundle.LoadAsset<RenderTexture>("assets/com.llealloo.audiolink/runtime/rendertextures/rt_audiolink.asset");
         }
     }
 }
