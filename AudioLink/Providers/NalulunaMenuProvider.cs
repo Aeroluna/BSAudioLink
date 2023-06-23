@@ -22,7 +22,7 @@ namespace AudioLink.Providers
 
         public void Initialize()
         {
-            Plugin.Logger.Info("Hooking NalulunaMenu...");
+            Plugin.Log.LogDebug("Hooking NalulunaMenu...");
             _harmony.PatchAll(typeof(NalulunaMenuProvider));
         }
 

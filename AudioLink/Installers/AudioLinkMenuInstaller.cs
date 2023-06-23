@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using AudioLink.Providers;
+﻿using AudioLink.Providers;
 using JetBrains.Annotations;
 using Zenject;
 
@@ -12,7 +11,7 @@ namespace AudioLink.Installers
         {
             Container.BindInterfacesTo<MenuProvider>().AsSingle();
 
-            if (IPA.Loader.PluginManager.EnabledPlugins.Any(x => x.Id == "NalulunaMenu"))
+            if (BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("NalulunaMenu"))
             {
                 Container.BindInterfacesTo<NalulunaMenuProvider>().AsSingle();
             }
