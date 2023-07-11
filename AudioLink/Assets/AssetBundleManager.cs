@@ -11,7 +11,7 @@ namespace AudioLink.Assets
 
         internal static RenderTexture RenderTexture { get; private set; } = null!;
 
-        internal static void LoadFromMemoryAsync()
+        internal static void LoadFromMemory()
         {
             byte[] bytes;
 
@@ -25,6 +25,7 @@ namespace AudioLink.Assets
             AssetBundle bundle = AssetBundle.LoadFromMemory(bytes, 3767804515);
             Material = bundle.LoadAsset<Material>("assets/com.llealloo.audiolink/runtime/materials/mat_audiolink.mat");
             RenderTexture = bundle.LoadAsset<RenderTexture>("assets/com.llealloo.audiolink/runtime/rendertextures/rt_audiolink.asset");
+            bundle.Unload(false);
         }
     }
 }

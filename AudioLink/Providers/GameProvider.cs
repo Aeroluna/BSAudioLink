@@ -1,18 +1,13 @@
-﻿using IPA.Utilities;
-using JetBrains.Annotations;
-using UnityEngine;
+﻿using JetBrains.Annotations;
 using Zenject;
 
 namespace AudioLink.Providers
 {
     internal class GameProvider : IInitializable
     {
-        private static readonly FieldAccessor<AudioTimeSyncController, AudioSource>.Accessor _audioSourceAccessor =
-            FieldAccessor<AudioTimeSyncController, AudioSource>.GetAccessor("_audioSource");
-
         private readonly Scripts.AudioLink _audioLink;
         private readonly ColorScheme _colorScheme;
-        private AudioTimeSyncController _audioTimeSyncController;
+        private readonly AudioTimeSyncController _audioTimeSyncController;
 
         [UsedImplicitly]
         private GameProvider(Scripts.AudioLink audioLink, AudioTimeSyncController audioTimeSyncController, ColorScheme colorScheme)
@@ -24,7 +19,7 @@ namespace AudioLink.Providers
 
         public void Initialize()
         {
-            _audioLink.SetAudioSource(_audioSourceAccessor(ref _audioTimeSyncController));
+            _audioLink.SetAudioSource(_audioTimeSyncController._audioSource);
             _audioLink.SetColorScheme(_colorScheme);
         }
     }

@@ -19,7 +19,7 @@ namespace AudioLink
         public Plugin(IPA.Logging.Logger logger, Zenjector zenjector)
         {
             Logger = logger;
-            AssetBundleManager.LoadFromMemoryAsync();
+            AssetBundleManager.LoadFromMemory();
             zenjector.Install<AudioLinkMenuInstaller>(Location.Menu);
             zenjector.Install<AudioLinkPlayerInstaller>(Location.Player);
             zenjector.Install<AudioLinkAppInstaller>(Location.App);
