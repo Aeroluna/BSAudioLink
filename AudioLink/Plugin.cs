@@ -48,7 +48,7 @@ namespace AudioLink
             }
             else
             {
-                SongCore.Collections.DeregisterizeCapability(CAPABILITY);
+                SongCore.Collections.DeregisterCapability(CAPABILITY);
             }
         }
     }
