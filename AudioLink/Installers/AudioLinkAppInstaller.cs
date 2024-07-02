@@ -1,4 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿using AudioLink.Assets;
+using AudioLink.Providers;
+using JetBrains.Annotations;
 using Zenject;
 
 namespace AudioLink.Installers
@@ -8,7 +10,9 @@ namespace AudioLink.Installers
     {
         public override void InstallBindings()
         {
+            Container.Bind<AssetBundleManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<Scripts.AudioLink>().AsSingle();
+            Container.BindInterfacesTo<UserInfoProvider>().AsSingle();
         }
     }
 }

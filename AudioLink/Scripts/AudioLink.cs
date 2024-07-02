@@ -4,15 +4,16 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Zenject;
+using static UnityEngine.Shader;
 
 namespace AudioLink.Scripts
 {
-    // from https://github.com/llealloo/vrc-udon-audio-link/blob/master/AudioLink/Scripts/AudioLink.cs
-    internal class AudioLink : ITickable
+    // from https://github.com/llealloo/audiolink/blob/master/Packages/com.llealloo.audiolink/Runtime/Scripts/AudioLink.cs
+    // i could implement AudioLink.DataAPI, if there was demand for it
+    public partial class AudioLink : ITickable
     {
-        private const float AUDIOLINK_VERSION_NUMBER = 3.01f;
-
-        private const int RIGHT_CHANNEL_TEST_DELAY = 300;
+        private const float AudioLinkVersionNumberMajor = 1.00f;
+        private const float AudioLinkVersionNumberMinor = 4.00f;
 
         private const float GAIN = 1f;
         private const float BASS = 1f;
@@ -29,68 +30,76 @@ namespace AudioLink.Scripts
         private const float FADE_EXP_FALLOFF = 0.75f;
         private const int THEME_COLOR_MODE = 1;
 
+        private const bool AUTOGAIN = true;
+        private const float AUTOGAIN_DERATE = 0.1f;
+
         // i'm sure mawntee will bother me to implement this at some point
         private const string CUSTOM_STRING1 = "";
         private const string CUSTOM_STRING2 = "";
 
-        private static readonly int _audioTexture = Shader.PropertyToID("_AudioTexture");
+        private const int RIGHT_CHANNEL_TEST_DELAY = 300;
 
-        private static readonly int _fadeLength = Shader.PropertyToID("_FadeLength");
-        private static readonly int _fadeExpFalloff = Shader.PropertyToID("_FadeExpFalloff");
-        private static readonly int _gain = Shader.PropertyToID("_Gain");
-        private static readonly int _bass = Shader.PropertyToID("_Bass");
-        private static readonly int _treble = Shader.PropertyToID("_Treble");
-        private static readonly int _x0 = Shader.PropertyToID("_X0");
-        private static readonly int _x1 = Shader.PropertyToID("_X1");
-        private static readonly int _x2 = Shader.PropertyToID("_X2");
-        private static readonly int _x3 = Shader.PropertyToID("_X3");
-        private static readonly int _threshold0 = Shader.PropertyToID("_Threshold0");
-        private static readonly int _threshold1 = Shader.PropertyToID("_Threshold1");
-        private static readonly int _threshold2 = Shader.PropertyToID("_Threshold2");
-        private static readonly int _threshold3 = Shader.PropertyToID("_Threshold3");
-        private static readonly int _sourceVolume = Shader.PropertyToID("_SourceVolume");
-        private static readonly int _sourceSpatialBlend = Shader.PropertyToID("_SourceSpatialBlend");
-        private static readonly int _sourcePosition = Shader.PropertyToID("_SourcePosition");
-        private static readonly int _themeColorMode = Shader.PropertyToID("_ThemeColorMode");
-        private static readonly int _customThemeColor0ID = Shader.PropertyToID("_CustomThemeColor0");
-        private static readonly int _customThemeColor1ID = Shader.PropertyToID("_CustomThemeColor1");
-        private static readonly int _customThemeColor2ID = Shader.PropertyToID("_CustomThemeColor2");
-        private static readonly int _customThemeColor3ID = Shader.PropertyToID("_CustomThemeColor3");
+        private const bool AUTO_SET_MEDIA_STATE = true;
 
-        private static readonly int _stringCustom1 = Shader.PropertyToID("_StringCustom1");
-        private static readonly int _stringCustom2 = Shader.PropertyToID("_StringCustom2");
+        private static readonly int _audioTexture = PropertyToID("_AudioTexture");
 
-        private static readonly int _advancedTimeProps0 = Shader.PropertyToID("_AdvancedTimeProps0");
-        private static readonly int _advancedTimeProps1 = Shader.PropertyToID("_AdvancedTimeProps1");
-        private static readonly int _playerCountAndData = Shader.PropertyToID("_PlayerCountAndData");
-        private static readonly int _versionNumberAndFPSProperty = Shader.PropertyToID("_VersionNumberAndFPSProperty");
+        private static readonly int _fadeLength = PropertyToID("_FadeLength");
+        private static readonly int _fadeExpFalloff = PropertyToID("_FadeExpFalloff");
+        private static readonly int _gain = PropertyToID("_Gain");
+        private static readonly int _bass = PropertyToID("_Bass");
+        private static readonly int _treble = PropertyToID("_Treble");
+        private static readonly int _x0 = PropertyToID("_X0");
+        private static readonly int _x1 = PropertyToID("_X1");
+        private static readonly int _x2 = PropertyToID("_X2");
+        private static readonly int _x3 = PropertyToID("_X3");
+        private static readonly int _threshold0 = PropertyToID("_Threshold0");
+        private static readonly int _threshold1 = PropertyToID("_Threshold1");
+        private static readonly int _threshold2 = PropertyToID("_Threshold2");
+        private static readonly int _threshold3 = PropertyToID("_Threshold3");
+        private static readonly int _autogain = PropertyToID("_Autogain");
+        private static readonly int _autogainDerate = PropertyToID("_AutogainDerate");
+        private static readonly int _sourceVolume = PropertyToID("_SourceVolume");
+        private static readonly int _sourceSpatialBlend = PropertyToID("_SourceSpatialBlend");
+        private static readonly int _sourcePosition = PropertyToID("_SourcePosition");
+        private static readonly int _themeColorMode = PropertyToID("_ThemeColorMode");
+        private static readonly int _customThemeColor0ID = PropertyToID("_CustomThemeColor0");
+        private static readonly int _customThemeColor1ID = PropertyToID("_CustomThemeColor1");
+        private static readonly int _customThemeColor2ID = PropertyToID("_CustomThemeColor2");
+        private static readonly int _customThemeColor3ID = PropertyToID("_CustomThemeColor3");
 
-        private static readonly int _samples0L = Shader.PropertyToID("_Samples0L");
-        private static readonly int _samples1L = Shader.PropertyToID("_Samples1L");
-        private static readonly int _samples2L = Shader.PropertyToID("_Samples2L");
-        private static readonly int _samples3L = Shader.PropertyToID("_Samples3L");
+        private static readonly int _stringLocalPlayer = PropertyToID("_StringLocalPlayer");
+        private static readonly int _stringMasterPlayer = PropertyToID("_StringMasterPlayer");
+        private static readonly int _stringCustom1 = PropertyToID("_StringCustom1");
+        private static readonly int _stringCustom2 = PropertyToID("_StringCustom2");
 
-        private static readonly int _samples0R = Shader.PropertyToID("_Samples0R");
-        private static readonly int _samples1R = Shader.PropertyToID("_Samples1R");
-        private static readonly int _samples2R = Shader.PropertyToID("_Samples2R");
-        private static readonly int _samples3R = Shader.PropertyToID("_Samples3R");
+        private static readonly int _advancedTimeProps0 = PropertyToID("_AdvancedTimeProps0");
+        private static readonly int _advancedTimeProps1 = PropertyToID("_AdvancedTimeProps1");
+        private static readonly int _playerCountAndData = PropertyToID("_PlayerCountAndData");
+        private static readonly int _versionNumberAndFPSProperty = PropertyToID("_VersionNumberAndFPSProperty");
+
+        private static readonly int _samples0L = PropertyToID("_Samples0L");
+        private static readonly int _samples1L = PropertyToID("_Samples1L");
+        private static readonly int _samples2L = PropertyToID("_Samples2L");
+        private static readonly int _samples3L = PropertyToID("_Samples3L");
+
+        private static readonly int _samples0R = PropertyToID("_Samples0R");
+        private static readonly int _samples1R = PropertyToID("_Samples1R");
+        private static readonly int _samples2R = PropertyToID("_Samples2R");
+        private static readonly int _samples3R = PropertyToID("_Samples3R");
 
         private readonly Material _audioMaterial;
 
-        ////private float[] _spectrumValues = new float[1024]; // unused in original script
-        ////private float[] _spectrumValuesTrim = new float[1023];
         private readonly float[] _audioFramesL = new float[1023 * 4];
         private readonly float[] _audioFramesR = new float[1023 * 4];
         private readonly float[] _samples = new float[1023];
 
-        private Color _customThemeColor0;
-        private Color _customThemeColor1;
-        private Color _customThemeColor2;
-        private Color _customThemeColor3;
-
         private AudioSource? _audioSource;
 
-        // Mechanism to provide sync'd instance time to all avatars.
+        private Color _customThemeColor0 = new(1.0f, 1.0f, 0.0f, 1.0f);
+        private Color _customThemeColor1 = new(0.0f, 0.0f, 1.0f, 1.0f);
+        private Color _customThemeColor2 = new(1.0f, 0.0f, 0.0f, 1.0f);
+        private Color _customThemeColor3 = new(0.0f, 1.0f, 0.0f, 1.0f);
+
         private double _elapsedTime;
         private double _elapsedTimeMSW;
         private int _networkTimeMS;
@@ -103,14 +112,14 @@ namespace AudioLink.Scripts
         private bool _ignoreRightChannel;
 
         [UsedImplicitly]
-        private AudioLink()
+        private AudioLink(AssetBundleManager _assetBundleManager)
         {
-            _audioMaterial = AssetBundleManager.Material;
+            _audioMaterial = _assetBundleManager.Material;
 
             UpdateSettings();
             UpdateCustomStrings();
 
-            Shader.SetGlobalTexture(_audioTexture, AssetBundleManager.RenderTexture, RenderTextureSubElement.Default);
+            SetGlobalTexture(_audioTexture, _assetBundleManager.RenderTexture, RenderTextureSubElement.Default);
         }
 
         public void Tick()
@@ -176,6 +185,24 @@ namespace AudioLink.Scripts
                 _audioMaterial.SetFloat(_sourceVolume, _audioSource.volume);
                 _audioMaterial.SetFloat(_sourceSpatialBlend, _audioSource.spatialBlend);
                 _audioMaterial.SetVector(_sourcePosition, _audioSource.transform.position);
+
+                // ReSharper disable once InvertIf
+                if (AUTO_SET_MEDIA_STATE)
+                {
+                    SetMediaVolume(_audioSource.volume);
+
+                    float time = 0f;
+                    if (_audioSource.clip != null)
+                    {
+                        time = _audioSource.time / _audioSource.clip.length;
+                    }
+
+                    SetMediaTime(time);
+
+                    SetMediaPlaying(_audioSource.isPlaying ? MediaPlaying.Playing : MediaPlaying.Stopped);
+
+                    SetMediaLoop(_audioSource.loop ? MediaLoop.Loop : MediaLoop.None);
+                }
             }
         }
 
@@ -202,38 +229,9 @@ namespace AudioLink.Scripts
             UpdateThemeColors();
         }
 
-        internal void UpdateSettings()
+        internal void SetLocalPlayerName(string name)
         {
-            _audioMaterial.SetFloat(_x0, X0);
-            _audioMaterial.SetFloat(_x1, X1);
-            _audioMaterial.SetFloat(_x2, X2);
-            _audioMaterial.SetFloat(_x3, X3);
-            _audioMaterial.SetFloat(_threshold0, THRESHOLD0);
-            _audioMaterial.SetFloat(_threshold1, THRESHOLD1);
-            _audioMaterial.SetFloat(_threshold2, THRESHOLD2);
-            _audioMaterial.SetFloat(_threshold3, THRESHOLD3);
-            _audioMaterial.SetFloat(_gain, GAIN);
-            _audioMaterial.SetFloat(_fadeLength, FADE_LENGTH);
-            _audioMaterial.SetFloat(_fadeExpFalloff, FADE_EXP_FALLOFF);
-            _audioMaterial.SetFloat(_bass, BASS);
-            _audioMaterial.SetFloat(_treble, TREBLE);
-        }
-
-        // Note: These might be changed frequently so as an optimization, they're in a different function
-        // rather than bundled in with the other things in UpdateSettings().
-        internal void UpdateThemeColors()
-        {
-            _audioMaterial.SetInt(_themeColorMode, THEME_COLOR_MODE);
-            _audioMaterial.SetColor(_customThemeColor0ID, _customThemeColor0);
-            _audioMaterial.SetColor(_customThemeColor1ID, _customThemeColor1);
-            _audioMaterial.SetColor(_customThemeColor2ID, _customThemeColor2);
-            _audioMaterial.SetColor(_customThemeColor3ID, _customThemeColor3);
-        }
-
-        internal void UpdateCustomStrings()
-        {
-            UpdateGlobalString(_stringCustom1, CUSTOM_STRING1);
-            UpdateGlobalString(_stringCustom2, CUSTOM_STRING2);
+            UpdateGlobalString(_stringLocalPlayer, name);
         }
 
         private static float IntToFloatBits24Bit(uint value)
@@ -245,8 +243,14 @@ namespace AudioLink.Scripts
         // Only happens once per second.
         private void FPSUpdate()
         {
-            _audioMaterial.SetVector(_versionNumberAndFPSProperty, new Vector4(AUDIOLINK_VERSION_NUMBER, 0, _fpsCount, 1));
-            _audioMaterial.SetVector(_playerCountAndData, new Vector4(0, 0, 0, 0));
+            // The red channel should be 3.02f forever - this is the last version before the versioning change.
+            _audioMaterial.SetVector(_versionNumberAndFPSProperty, new Vector4(3.02f, AudioLinkVersionNumberMajor, _fpsCount, AudioLinkVersionNumberMinor));
+            _audioMaterial.SetVector(_playerCountAndData, new Vector4(
+            0,
+            0,
+            0,
+            0));
+
             _fpsCount = 0;
             _fpsTime++;
 
@@ -254,14 +258,14 @@ namespace AudioLink.Scripts
 
             // This handles wrapping of the ElapsedTime so we don't lose precision
             // onthe floating point.
-            const double ElapsedTimeMSWBoundary = 1024;
-            if (_elapsedTime >= ElapsedTimeMSWBoundary)
+            const double elapsedTimeMSWBoundary = 1024;
+            if (_elapsedTime >= elapsedTimeMSWBoundary)
             {
                 // For particularly long running instances, i.e. several days, the first
                 // few frames will be spent federating _elapsedTime into _elapsedTimeMSW.
                 // This is fine.  It just means over time, the
                 _fpsTime = 0;
-                _elapsedTime -= ElapsedTimeMSWBoundary;
+                _elapsedTime -= elapsedTimeMSWBoundary;
                 _elapsedTimeMSW++;
             }
 
@@ -280,6 +284,42 @@ namespace AudioLink.Scripts
                     _networkTimeMS += networkTimeDelta / 20;
                     break;
             }
+        }
+
+        private void UpdateSettings()
+        {
+            _audioMaterial.SetFloat(_x0, X0);
+            _audioMaterial.SetFloat(_x1, X1);
+            _audioMaterial.SetFloat(_x2, X2);
+            _audioMaterial.SetFloat(_x3, X3);
+            _audioMaterial.SetFloat(_threshold0, THRESHOLD0);
+            _audioMaterial.SetFloat(_threshold1, THRESHOLD1);
+            _audioMaterial.SetFloat(_threshold2, THRESHOLD2);
+            _audioMaterial.SetFloat(_threshold3, THRESHOLD3);
+            _audioMaterial.SetFloat(_gain, GAIN);
+            _audioMaterial.SetFloat(_fadeLength, FADE_LENGTH);
+            _audioMaterial.SetFloat(_fadeExpFalloff, FADE_EXP_FALLOFF);
+            _audioMaterial.SetFloat(_bass, BASS);
+            _audioMaterial.SetFloat(_treble, TREBLE);
+            _audioMaterial.SetFloat(_autogain, AUTOGAIN ? 1 : 0);
+            _audioMaterial.SetFloat(_autogainDerate, AUTOGAIN_DERATE);
+        }
+
+        // Note: These might be changed frequently so as an optimization, they're in a different function
+        // rather than bundled in with the other things in UpdateSettings().
+        private void UpdateThemeColors()
+        {
+            _audioMaterial.SetInt(_themeColorMode, THEME_COLOR_MODE);
+            _audioMaterial.SetColor(_customThemeColor0ID, _customThemeColor0);
+            _audioMaterial.SetColor(_customThemeColor1ID, _customThemeColor1);
+            _audioMaterial.SetColor(_customThemeColor2ID, _customThemeColor2);
+            _audioMaterial.SetColor(_customThemeColor3ID, _customThemeColor3);
+        }
+
+        private void UpdateCustomStrings()
+        {
+            UpdateGlobalString(_stringCustom1, CUSTOM_STRING1);
+            UpdateGlobalString(_stringCustom2, CUSTOM_STRING2);
         }
 
         private void UpdateGlobalString(int nameID, string input)

@@ -3,18 +3,13 @@ using UnityEngine;
 
 namespace AudioLink.Assets
 {
-    internal static class AssetBundleManager
+    internal class AssetBundleManager
     {
         private const string PATH = "AudioLink.Assets.Bundle";
 
-        internal static Material Material { get; private set; } = null!;
-
-        internal static RenderTexture RenderTexture { get; private set; } = null!;
-
-        internal static void LoadFromMemory()
+        internal AssetBundleManager()
         {
             byte[] bytes;
-
             using (Stream stream = typeof(AssetBundleManager).Assembly.GetManifestResourceStream(PATH)!)
             using (MemoryStream memoryStream = new())
             {
@@ -22,10 +17,20 @@ namespace AudioLink.Assets
                 bytes = memoryStream.ToArray();
             }
 
-            AssetBundle bundle = AssetBundle.LoadFromMemory(bytes, 3767804515);
+#if V1_29_1
+            const uint crc = 2981778216;
+#else
+            const uint crc = 870709400;
+#endif
+            AssetBundle bundle = AssetBundle.LoadFromMemory(bytes, crc);
             Material = bundle.LoadAsset<Material>("assets/com.llealloo.audiolink/runtime/materials/mat_audiolink.mat");
-            RenderTexture = bundle.LoadAsset<RenderTexture>("assets/com.llealloo.audiolink/runtime/rendertextures/rt_audiolink.asset");
+            RenderTexture = bundle.LoadAsset<CustomRenderTexture>("assets/com.llealloo.audiolink/runtime/rendertextures/rt_audiolink.asset");
+            RenderTexture.updateMode = CustomRenderTextureUpdateMode.Realtime;
             bundle.Unload(false);
         }
+
+        internal Material Material { get; }
+
+        internal CustomRenderTexture RenderTexture { get; }
     }
 }

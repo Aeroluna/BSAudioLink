@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AudioLink.Assets;
 using AudioLink.Installers;
 using IPA;
 using IPA.Loader;
@@ -19,7 +18,6 @@ namespace AudioLink
         public Plugin(IPA.Logging.Logger logger, Zenjector zenjector)
         {
             Logger = logger;
-            AssetBundleManager.LoadFromMemory();
             zenjector.Install<AudioLinkMenuInstaller>(Location.Menu);
             zenjector.Install<AudioLinkPlayerInstaller>(Location.Player);
             zenjector.Install<AudioLinkAppInstaller>(Location.App);
@@ -48,7 +46,11 @@ namespace AudioLink
             }
             else
             {
+#if LATEST
+                SongCore.Collections.DeregisterCapability(CAPABILITY);
+#else
                 SongCore.Collections.DeregisterizeCapability(CAPABILITY);
+#endif
             }
         }
     }
