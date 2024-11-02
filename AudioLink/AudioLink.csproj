@@ -28,7 +28,6 @@
     <Reference Include="Main" HintPath="$(BeatSaberDir)\Beat Saber_Data\Managed\Main.dll" Publicize="true" />
     <Reference Include="PlatformUserModel" HintPath="$(BeatSaberDir)\Beat Saber_Data\Managed\PlatformUserModel.dll" />
     <Reference Include="SiraUtil" HintPath="$(BeatSaberDir)\Plugins\SiraUtil.dll" />
-    <Reference Include="SongCore" HintPath="$(BeatSaberDir)\Plugins\SongCore.dll" />
     <Reference Include="UnityEngine.AssetBundleModule" HintPath="$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.AssetBundleModule.dll" />
     <Reference Include="UnityEngine.AudioModule" HintPath="$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.AudioModule.dll" />
     <Reference Include="UnityEngine.CoreModule" HintPath="$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.CoreModule.dll" />

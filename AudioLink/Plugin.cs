@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using AudioLink.Installers;
+using HarmonyLib;
 using IPA;
 using IPA.Loader;
 using JetBrains.Annotations;
@@ -33,25 +36,21 @@ namespace AudioLink
             IEnumerable<PluginMetadata> allPlugins = PluginManager.EnabledPlugins.Concat(PluginManager.DisabledPlugins);
             if (allPlugins.Any(x => x.Id == "SongCore"))
             {
-                ToggleCapability(true);
+                RegisterCapability();
             }
         }
 #pragma warning restore CA1822
 
-        private static void ToggleCapability(bool value)
+        private static void RegisterCapability()
         {
-            if (value)
+            Type? collections = Type.GetType("SongCore.Collections, SongCore");
+            if (collections == null)
             {
-                SongCore.Collections.RegisterCapability(CAPABILITY);
+                return;
             }
-            else
-            {
-#if LATEST
-                SongCore.Collections.DeregisterCapability(CAPABILITY);
-#else
-                SongCore.Collections.DeregisterizeCapability(CAPABILITY);
-#endif
-            }
+
+            MethodInfo register = AccessTools.Method(collections, "RegisterCapability");
+            register.Invoke(null, new object[] { CAPABILITY });
         }
     }
 }
