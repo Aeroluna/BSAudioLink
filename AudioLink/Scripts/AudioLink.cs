@@ -112,14 +112,14 @@ namespace AudioLink.Scripts
         private bool _ignoreRightChannel;
 
         [UsedImplicitly]
-        private AudioLink(AssetBundleManager _assetBundleManager)
+        private AudioLink(AssetBundleManager assetBundleManager)
         {
-            _audioMaterial = _assetBundleManager.Material;
+            _audioMaterial = assetBundleManager.Material;
 
             UpdateSettings();
             UpdateCustomStrings();
 
-            SetGlobalTexture(_audioTexture, _assetBundleManager.RenderTexture, RenderTextureSubElement.Default);
+            SetGlobalTexture(_audioTexture, assetBundleManager.RenderTexture, RenderTextureSubElement.Default);
         }
 
         public void Tick()
