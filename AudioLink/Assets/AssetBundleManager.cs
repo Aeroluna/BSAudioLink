@@ -18,9 +18,9 @@ namespace AudioLink.Assets
             }
 
 #if V1_29_1
-            const uint crc = 2981778216;
+            const uint crc = 3706163252;
 #else
-            const uint crc = 870709400;
+            const uint crc = 2240245297;
 #endif
             AssetBundle bundle = AssetBundle.LoadFromMemory(bytes, crc);
             Material = bundle.LoadAsset<Material>("assets/com.llealloo.audiolink/runtime/materials/mat_audiolink.mat");

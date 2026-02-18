@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AudioLink.Extras;
 using JetBrains.Annotations;
 using SiraUtil.Affinity;
 using UnityEngine;
@@ -10,11 +11,11 @@ namespace AudioLink.Providers
     {
         private static ColorScheme? _menuColorScheme;
 
-        private readonly Scripts.AudioLink _audioLink;
+        private readonly AudioLink _audioLink;
         private readonly PlayerDataModel _playerDataModel;
 
         [UsedImplicitly]
-        private MenuProvider(Scripts.AudioLink audioLink, PlayerDataModel playerDataModel)
+        private MenuProvider(AudioLink audioLink, PlayerDataModel playerDataModel)
         {
             _audioLink = audioLink;
             _playerDataModel = playerDataModel;

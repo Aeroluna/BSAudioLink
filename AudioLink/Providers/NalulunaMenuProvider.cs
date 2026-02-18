@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using AudioLink.Extras;
 using HarmonyLib;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -12,10 +13,10 @@ namespace AudioLink.Providers
     {
         private static readonly Harmony _harmony = new("aeroluna.AudioLink");
 
-        private static Scripts.AudioLink? _audioLink;
+        private static AudioLink? _audioLink;
 
         [UsedImplicitly]
-        private NalulunaMenuProvider(Scripts.AudioLink audioLink)
+        private NalulunaMenuProvider(AudioLink audioLink)
         {
             _audioLink = audioLink;
         }

@@ -17,13 +17,13 @@ namespace AudioLink.Providers
 #else
         private readonly IPlatformUserModel _platformUserModel;
 #endif
-        private readonly Scripts.AudioLink _audioLink;
+        private readonly AudioLink _audioLink;
 
         [UsedImplicitly]
 #if LATEST
         private UserInfoProvider(IPlatform platformUserModel, Scripts.AudioLink audioLink)
 #else
-        private UserInfoProvider(IPlatformUserModel platformUserModel, Scripts.AudioLink audioLink)
+        private UserInfoProvider(IPlatformUserModel platformUserModel, AudioLink audioLink)
 #endif
         {
             _platformUserModel = platformUserModel;

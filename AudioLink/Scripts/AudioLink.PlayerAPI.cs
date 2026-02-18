@@ -1,44 +1,19 @@
-﻿using JetBrains.Annotations;
+﻿
 using UnityEngine;
 
-namespace AudioLink.Scripts
+namespace AudioLink
 {
-    [PublicAPI]
-    public enum MediaPlaying
-    {
-        None = 0,
-        Playing = 1,
-        Paused = 2,
-        Stopped = 3,
-        Loading = 4,
-        Streaming = 5,
-        Error = 6
-    }
-
-    [PublicAPI]
-    public enum MediaLoop
-    {
-        None = 0,
-        Loop = 1,
-        LoopOne = 2,
-        Random = 3,
-        RandomLoop = 4
-    }
-
     public partial class AudioLink
     {
-        private static readonly int _mediaVolume = Shader.PropertyToID("_MediaVolume");
-        private static readonly int _mediaTime = Shader.PropertyToID("_MediaTime");
-        private static readonly int _mediaPlaying = Shader.PropertyToID("_MediaPlaying");
-        private static readonly int _mediaLoop = Shader.PropertyToID("_MediaLoop");
-
         /// <summary>
         /// Set Media Volume display. Volume is in range 0.0f to 1.0f.
         /// </summary>
         /// <param name="volume">The volume to set between 0.0f and 1.0f</param>
         public void SetMediaVolume(float volume)
         {
-            _audioMaterial.SetFloat(_mediaVolume, volume);
+
+            audioMaterial.SetFloat("_MediaVolume", volume);
+
         }
 
         /// <summary>
@@ -47,7 +22,9 @@ namespace AudioLink.Scripts
         /// <param name="time">The time to set between 0.0f and 1.0f</param>
         public void SetMediaTime(float time)
         {
-            _audioMaterial.SetFloat(_mediaTime, time);
+
+            audioMaterial.SetFloat("_MediaTime", time);
+
         }
 
         /// <summary>
@@ -61,8 +38,10 @@ namespace AudioLink.Scripts
         /// <param name="playingstate">The playing state to set.</param>
         public void SetMediaPlaying(MediaPlaying playingstate)
         {
+
             int state = (int)playingstate;
-            _audioMaterial.SetFloat(_mediaPlaying, state);
+            audioMaterial.SetFloat("_MediaPlaying", (float)state);
+
         }
 
         /// <summary>
@@ -76,8 +55,30 @@ namespace AudioLink.Scripts
         /// <param name="loopstate">The loop state to set.</param>
         public void SetMediaLoop(MediaLoop loopstate)
         {
+
             int loop = (int)loopstate;
-            _audioMaterial.SetFloat(_mediaLoop, loop);
+            audioMaterial.SetFloat("_MediaLoop", (float)loop);
+
         }
+    }
+
+    public enum MediaPlaying
+    {
+        None = 0,
+        Playing = 1,
+        Paused = 2,
+        Stopped = 3,
+        Loading = 4,
+        Streaming = 5,
+        Error = 6
+    }
+
+    public enum MediaLoop
+    {
+        None = 0,
+        Loop = 1,
+        LoopOne = 2,
+        Random = 3,
+        RandomLoop = 4
     }
 }
