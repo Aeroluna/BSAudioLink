@@ -21,6 +21,8 @@ namespace AudioLink.Installers
             AudioLink audioLink = audioLinkGameObject.AddComponent<AudioLink>();
             audioLink.audioMaterial = assetBundleManager.Material;
             audioLink.audioRenderTexture = assetBundleManager.RenderTexture;
+            audioLink.customString1 = string.Empty;
+            audioLink.customString2 = string.Empty;
             audioLinkGameObject.SetActive(true);
 
             Container.Bind<AssetBundleManager>().FromInstance(assetBundleManager);
