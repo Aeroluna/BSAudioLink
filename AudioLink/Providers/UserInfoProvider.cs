@@ -21,7 +21,7 @@ namespace AudioLink.Providers
 
         [UsedImplicitly]
 #if LATEST
-        private UserInfoProvider(IPlatform platformUserModel, Scripts.AudioLink audioLink)
+        private UserInfoProvider(IPlatform platformUserModel, AudioLink audioLink)
 #else
         private UserInfoProvider(IPlatformUserModel platformUserModel, AudioLink audioLink)
 #endif
