@@ -12,7 +12,7 @@
     <PluginId>AudioLink</PluginId>
     <PluginName>AudioLink</PluginName>
     <Author>Aeroluna</Author>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Description>VRC Audio Link ported to Beat Saber. Original: https://github.com/llealloo/vrc-udon-audio-link</Description>
   </PropertyGroup>
   <ItemGroup>
